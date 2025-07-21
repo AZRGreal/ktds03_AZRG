@@ -14,4 +14,4 @@ openai>=1.0.0
 azure-storage-blob
 folium
 streamlit-folium
-
+openpyxl
