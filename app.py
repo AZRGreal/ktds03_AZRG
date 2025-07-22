@@ -1,10 +1,10 @@
 import streamlit as st
-# from dotenv import load_dotenv
 import os
+import requests
 from utils import (
     get_coordinates_from_station,
     search_places,
-    save_files_locally,
+    save_csv_only,  # ✅ CSV만 저장 함수
     get_place_reviews
 )
 from azure_blob import upload_to_blob
@@ -13,15 +13,28 @@ from map_utils import render_map
 from streamlit_folium import st_folium
 from save_summary_to_blob import save_summary_to_blob
 
-# 환경 변수 로드
-# load_dotenv()
+# ✅ Google 리뷰 캐싱
+@st.cache_data(show_spinner=False)
+def get_cached_reviews(place_id, api_key, max_reviews=5):
+    url = "https://maps.googleapis.com/maps/api/place/details/json"
+    params = {
+        "place_id": place_id,
+        "fields": "review",
+        "language": "ko",
+        "key": api_key
+    }
+    response = requests.get(url, params=params).json()
+    reviews = response.get("result", {}).get("reviews", [])
+    return [r["text"] for r in reviews][:max_reviews]
+
+# ✅ 환경 변수 로드
 google_key = os.getenv("GOOGLE_MAPS_API_KEY")
 
-# 페이지 설정
-st.set_page_config(page_title="지하철 주변 맛집 찾기", layout="centered")
+# ✅ Streamlit 페이지 설정
+st.set_page_config(page_title="지하철 주부 맛집 찾기", layout="centered")
 st.title("🔍 지하철역 맛집/카페 검색기")
 
-# 세션 상태 초기화
+# ✅ 세션 초기화
 if "search_results" not in st.session_state:
     st.session_state.search_results = None
 if "center_lat" not in st.session_state:
@@ -29,18 +42,18 @@ if "center_lat" not in st.session_state:
 if "center_lng" not in st.session_state:
     st.session_state.center_lng = None
 
-# 환경 변수 확인
+# ✅ Azure 환경 변수 확인
 conn = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 if conn and "AccountName=" in conn and "AccountKey=" in conn:
-    st.success("✅ 환경변수 로딩 완료 및 형식 이상 없음")
+    st.success("✅ Azure 환경변수 로드 완료")
 else:
-    st.error("❌ 환경변수 설정 오류")
+    st.error("❌ Azure 환경변수 설정 오류")
 
-# 입력 UI
+# ✅ 검색 UI
 station = st.text_input("지하철역을 입력하세요", placeholder="예: 강남역")
 radius = 500
 
-# 검색 실행
+# ✅ 검색 버튼
 if st.button("검색 시작"):
     if not station:
         st.warning("지하철역 이름을 입력하세요.")
@@ -49,23 +62,21 @@ if st.button("검색 시작"):
         df = search_places(lat, lng, radius, google_key)
 
         if df is not None:
-            # 세션에 결과 저장
             st.session_state.search_results = df
             st.session_state.center_lat = lat
             st.session_state.center_lng = lng
 
-            # 파일 저장 및 업로드
             filename_base = f"{station}_search_results"
-            save_files_locally(df, filename_base)
 
-            for ext in ["csv", "xlsx", "txt"]:
-                upload_to_blob(f"{filename_base}.{ext}", f"{filename_base}.{ext}")
+            # ✅ CSV 저장 및 업로드
+            save_csv_only(df, filename_base)
+            upload_to_blob(f"{filename_base}.csv", f"{filename_base}.csv")
 
-            st.success("📁 검색 결과가 저장되고 Azure에 업로드되었습니다.")
+            st.success("📁 CSV 저장 및 Azure 업로드 완료!")
         else:
-            st.error("❌ 맛집 검색에 실패했습니다.")
+            st.error("❌ 검색 결과가 없습니다.")
 
-# ✅ 검색 결과가 세션에 저장되어 있을 때만 결과 표시
+# ✅ 검색 결과 출력
 if st.session_state.search_results is not None:
     df = st.session_state.search_results
     lat = st.session_state.center_lat
@@ -74,49 +85,35 @@ if st.session_state.search_results is not None:
     st.success(f"📍 검색 위치: 위도 {lat}, 경도 {lng}")
     st.dataframe(df)
 
-    # ⬇️ 다운로드 버튼
-    st.markdown("### ⬇️ 파일 다운로드")
-    filename_base = f"{station}_search_results"
-    for ext in ["csv", "xlsx", "txt"]:
-        file_path = f"{filename_base}.{ext}"
-        with open(file_path, "rb") as f:
-            st.download_button(
-                label=f"{ext.upper()} 파일 다운로드",
-                data=f,
-                file_name=os.path.basename(file_path),
-                mime=(
-                    "text/csv" if ext == "csv"
-                    else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" if ext == "xlsx"
-                    else "text/plain"
-                )
-            )
+    # ✅ 대표 리뷰 캐싱
+    cached_reviews = {
+        row["place_id"]: get_cached_reviews(row["place_id"], google_key)
+        for _, row in df.head(10).iterrows()
+    }
 
-    # 📝 리뷰 표시
-    st.markdown("### 📝 대표 리뷰 보기")
-    for i, row in df.head(5).iterrows():
+    # ✅ 대표 리뷰 표시
+    st.markdown("### 📜 대표 리뷰 보기")
+    for _, row in df.head(10).iterrows():
         st.subheader(f"{row['name']} ({row['type']})")
-        reviews = get_place_reviews(row["place_id"], google_key)
+        reviews = cached_reviews.get(row["place_id"], [])
         if reviews:
-            for r in reviews:
+            for r in reviews[:3]:
                 st.markdown(f"- {r}")
         else:
-            st.markdown("리뷰 없음 😢")
+            st.markdown("리뷰 없음 😞")
 
-    # 🤖 GPT 요약
-    st.markdown("### 🤖 GPT 장점/단점 요약")
-    for i, row in df.head(5).iterrows():
+    # ✅ GPT 요약
+    st.markdown("### 🧐 GPT 장점/단점 요약")
+    for _, row in df.head(3).iterrows():
         st.subheader(f"📍 {row['name']}")
-        reviews = get_place_reviews(row["place_id"], google_key)
+        reviews = cached_reviews.get(row["place_id"], [])
         with st.spinner("GPT가 요약 중입니다..."):
             summary = summarize_reviews(reviews)
         st.markdown(summary)
         st.markdown("---")
-
-        # ✅ 여기서 Blob 저장 호출!
         save_summary_to_blob(row["name"], summary)
 
-    # 지도 시각화
-    st.markdown("### 🗺️ 지도에서 위치 보기")
+    # ✅ 지도 표시
+    st.markdown("### 🗌 지도에서 위치 보기")
     map_obj = render_map(df, lat, lng)
     st_folium(map_obj, width=700, height=500, returned_objects=[])
-
