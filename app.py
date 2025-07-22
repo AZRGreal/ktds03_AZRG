@@ -11,6 +11,7 @@ from azure_blob import upload_to_blob
 from openai_utils import summarize_reviews
 from map_utils import render_map
 from streamlit_folium import st_folium
+from save_summary_to_blob import save_summary_to_blob
 
 # 환경 변수 로드
 # load_dotenv()
@@ -47,19 +48,22 @@ if st.button("검색 시작"):
         lat, lng = get_coordinates_from_station(station, google_key)
         df = search_places(lat, lng, radius, google_key)
 
-        # 세션에 결과 저장
-        st.session_state.search_results = df
-        st.session_state.center_lat = lat
-        st.session_state.center_lng = lng
+        if df is not None:
+            # 세션에 결과 저장
+            st.session_state.search_results = df
+            st.session_state.center_lat = lat
+            st.session_state.center_lng = lng
 
-        # 파일 저장 및 업로드
-        filename_base = f"{station}_search_results"
-        save_files_locally(df, filename_base)
+            # 파일 저장 및 업로드
+            filename_base = f"{station}_search_results"
+            save_files_locally(df, filename_base)
 
-        for ext in ["csv", "xlsx", "txt"]:
-            upload_to_blob(f"{filename_base}.{ext}", f"{filename_base}.{ext}")
+            for ext in ["csv", "xlsx", "txt"]:
+                upload_to_blob(f"{filename_base}.{ext}", f"{filename_base}.{ext}")
 
-        st.success("📁 검색 결과가 저장되고 Azure에 업로드되었습니다.")
+            st.success("📁 검색 결과가 저장되고 Azure에 업로드되었습니다.")
+        else:
+            st.error("❌ 맛집 검색에 실패했습니다.")
 
 # ✅ 검색 결과가 세션에 저장되어 있을 때만 결과 표시
 if st.session_state.search_results is not None:
@@ -108,8 +112,11 @@ if st.session_state.search_results is not None:
         st.markdown(summary)
         st.markdown("---")
 
+        # ✅ 여기서 Blob 저장 호출!
+        save_summary_to_blob(row["name"], summary)
+
     # 지도 시각화
     st.markdown("### 🗺️ 지도에서 위치 보기")
     map_obj = render_map(df, lat, lng)
-    # st_folium(map_obj, width=700, height=500)
     st_folium(map_obj, width=700, height=500, returned_objects=[])
+

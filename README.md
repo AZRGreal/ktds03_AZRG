@@ -1,41 +1,31 @@
-# 🚀 지하철 상권 분석기 (Streamlit + Azure)
+# 지하철역 주변 맛집/카페 검색기 + GPT 요약 + Blob 저장
 
-이 앱은 Google Maps 및 Azure 서비스를 활용해 지하철역 주변 맛집/카페 정보를 검색하고, GPT로 요약하며, Azure Search로 검색 가능한 구조로 저장합니다.
+## 📦 기능 요약
+- 지하철역 입력 시 주변 음식점/카페 검색
+- Google 리뷰 수집 후 Azure OpenAI로 장단점 요약
+- 요약 결과를 Azure Blob Storage에 자동 저장
+- Streamlit UI + 지도 시각화 + 파일 다운로드
 
-## ✅ 주요 기능
-- Google Places API를 통한 상권 데이터 수집
-- Azure OpenAI GPT를 이용한 리뷰 요약
-- Folium 기반 지도 시각화
-- Azure Blob Storage 업로드
-- Azure AI Search로 검색 인덱싱
+## 🧪 실행 방법
+1. `.env` 또는 Azure App Service 환경변수에 아래 값 추가:
+   - `GOOGLE_MAPS_API_KEY`
+   - `AZURE_STORAGE_CONNECTION_STRING`
+   - `AZURE_CONTAINER_NAME`
+   - `AZURE_OPENAI_API_KEY`
+   - `AZURE_OPENAI_ENDPOINT`
+   - `AZURE_OPENAI_DEPLOYMENT`
+   - `AZURE_BLOB_SUMMARY_DIR` (예: `summaries/`)
+   - `AZURE_BLOB_FILE_PREFIX` (예: `summary_`)
 
-## 🛠️ 구성 파일
-
-| 파일명 | 설명 |
-|--------|------|
-| `app.py` | Streamlit 웹앱 메인 |
-| `utils.py` | 데이터 수집, 저장, 리뷰 수집 등 유틸 함수 |
-| `openai_utils.py` | GPT 요약 처리 |
-| `map_utils.py` | Folium 지도 생성 |
-| `azure_blob.py` | Azure Blob 업로드 기능 |
-| `.env` | API 키 및 환경변수 |
-| `requirements.txt` | 설치 패키지 목록 |
-| `search_setup.py` | Azure Search Index/Indexer/DataSource 자동 생성 스크립트 |
-
-## ⚙️ Azure Search 설정 방법
-
-```bash
-python search_setup.py
-```
-
-해당 명령을 실행하면 아래 항목이 생성됩니다:
-- Search Index (station-index)
-- Data Source (Azure Blob 연동)
-- Indexer (2시간마다 자동 새로고침)
-
-## 📦 설치
-
+2. 필요한 패키지 설치:
 ```bash
 pip install -r requirements.txt
+```
+
+3. 실행:
+```bash
 streamlit run app.py
 ```
+
+## 📝 결과 저장 위치
+- 요약 파일은 Azure Blob Storage 내 `summaries/summary_{장소명}_{시간}.txt` 형식으로 저장됩니다.
