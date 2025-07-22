@@ -10,7 +10,7 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
-DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT")
 
 # 지하철역 → 좌표 변환
 def get_coordinates_from_station(station_name, api_key):
