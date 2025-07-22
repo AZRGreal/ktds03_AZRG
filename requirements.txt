@@ -1,0 +1,17 @@
+# streamlit
+# pandas
+# openpyxl
+# python-dotenv
+# requests
+# azure-storage-blob
+# openai>=1.0.0
+
+streamlit
+pandas
+requests
+python-dotenv
+openai>=1.0.0
+azure-storage-blob
+folium
+streamlit-folium
+openpyxl
