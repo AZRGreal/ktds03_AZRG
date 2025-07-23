@@ -91,8 +91,8 @@ def download_youtube_audio(url, output_dir="downloads"):
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
-            'quiet': True,
-            'cookiefile': 'cookies.txt'  # ✅ 크롬 인증 쿠키 파일
+            'quiet': False,  # 디버깅 시에는 False로!
+            'cookiefile': 'cookies.txt',  # ✅ 여기가 핵심
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
