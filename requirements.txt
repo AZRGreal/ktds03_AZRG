@@ -14,3 +14,4 @@ moviepy
 fpdf
 pytube
 moviepy
+yt-dlp
