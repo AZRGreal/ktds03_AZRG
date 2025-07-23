@@ -4,8 +4,6 @@ import webbrowser
 import warnings
 warnings.filterwarnings("ignore", message="cmap value too big/small:*")
 
-
-
 from utils import (
     get_coordinates_from_station,
     search_places,
@@ -14,20 +12,21 @@ from utils import (
     remove_emojis
 )
 from azure_blob import upload_to_blob
-from openai_utils import summarize_reviews
+from openai_utils import summarize_reviews, summarize_text, safe_text
 from map_utils import render_map
 from streamlit_folium import st_folium
 from save_summary_to_blob import save_summary_to_blob
 from video_utils import search_youtube_videos, download_youtube_audio
 from speech_utils import transcribe_audio_from_file
 from pdf_utils import save_to_pdf
+from openai_utils import summarize_reviews, summarize_text, safe_text
 
 # 환경 변수
 google_key = os.getenv("GOOGLE_MAPS_API_KEY")
 conn = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 
 st.set_page_config(page_title="지하철 맛집 검색기", layout="centered")
-st.title("🔍 지하철역 음식점/카페 검색기")
+st.title("🔍 지하철역 주변 음식점/카페 검색기")
 
 # 초기 세션 상태
 if "search_results" not in st.session_state:
@@ -77,7 +76,7 @@ if st.session_state.search_results is not None:
 
     st.success(f"📍 검색 위치: 위도 {lat}, 경도 {lng}")
     st.dataframe(df[["name", "type", "rating", "user_ratings_total"]])
-   
+
     # 지도 출력
     with st.container():
         st.markdown("<h6 style='margin: 5px 0;'>🗺️ 지도에서 위치 보기</h6>", unsafe_allow_html=True)
@@ -86,7 +85,7 @@ if st.session_state.search_results is not None:
 
     # 여백 최소화 및 리뷰 타이틀
     with st.container():
-        st.markdown("<div style='margin-top: -30px;'></div>", unsafe_allow_html=True)  # 여백 강제 축소
+        st.markdown("<div style='margin-top: -30px;'></div>", unsafe_allow_html=True)
         st.markdown("<h6 style='margin: 5px 0;'>📜 대표 리뷰 및 요약</h6>", unsafe_allow_html=True)
 
     for idx, row in df.head(3).iterrows():
@@ -102,6 +101,7 @@ if st.session_state.search_results is not None:
                 save_summary_to_blob(row["name"], summary)
         else:
             st.markdown("리뷰 없음 😞")
+
     st.divider()
     st.markdown("### 🔍 상호명으로 유튜브 검색하기")
     name_options = df["name"].tolist()
@@ -111,12 +111,11 @@ if st.session_state.search_results is not None:
         youtube_search_url = f"https://www.youtube.com/results?search_query={query}"
         js = f"window.open('{youtube_search_url}')"
         st.components.v1.html(f"""
-        <script>
-            {js}
-        </script>
+        <script>{js}</script>
         """, height=0)
+
 st.divider()
-st.markdown("### 🎧 선택된 영상 분석")
+st.markdown("### 🎧 음식점/카페 영상 장, 단점 분석기")
 
 st.markdown("아래처럼 GPT가 장점과 단점을 최대 10개까지 요약해줍니다.")
 st.markdown("""
@@ -139,12 +138,12 @@ if video_url:
 
             with st.spinner("🗣 Azure Speech로 자막 변환 중..."):
                 transcript = transcribe_audio_from_file(audio_path)
+                st.session_state["transcript_text"] = transcript
 
             with st.spinner("✍️ 감정 기반 요약 생성 중..."):
                 summary = summarize_reviews([transcript])
                 summary = remove_emojis(summary)
 
-                # ✅ 페이지에 요약 내용 먼저 표시
                 st.markdown("#### 📋 분석 요약 결과")
                 st.markdown(summary)
 
@@ -159,3 +158,56 @@ if video_url:
             st.error(f"❌ 분석 중 오류 발생: {e}")
 else:
     st.info("YouTube 영상 주소를 입력해주세요.")
+
+# 영상 전체 요약기 추가
+if video_url and st.session_state.get("transcript_text"):
+    st.markdown("### 🧠 영상 전체 요약 보기 (GPT 기반)")
+    if st.button("📝 전체 영상 요약 생성"):
+        with st.spinner("🔎 GPT로 전체 영상 요약 중..."):
+            cleaned_text = safe_text(st.session_state["transcript_text"])
+            video_summary = summarize_text(cleaned_text)
+            st.text_area("🎯 GPT 전체 요약 결과", video_summary, height=200)
+
+            with st.spinner("📄 PDF로 저장 중..."):
+                pdf_path = save_to_pdf(video_summary, filename="video_gpt_summary.pdf")
+
+            st.success("✅ 전체 요약 완료!")
+            with open(pdf_path, "rb") as f:
+                st.download_button("📥 전체 요약 PDF 다운로드", f, file_name=os.path.basename(pdf_path))
+
+# 자유 영상 분석기 추가
+st.divider()
+st.markdown("### 🧪 자유 영상 분석기 (URL 기반)")
+st.markdown("아무 유튜브 영상의 주소를 입력하면 전체 내용을 요약해드립니다.")
+
+free_video_url = st.text_input("🎬 자유 영상 URL 입력", key="free_video_url")
+
+if free_video_url:
+    if st.button("🧠 영상 요약 분석 실행", key="btn_free_summary"):
+        try:
+            with st.spinner("📥 YouTube 오디오 다운로드 중..."):
+                audio_path = download_youtube_audio(free_video_url)
+                upload_to_blob(audio_path, os.path.basename(audio_path))
+
+            with st.spinner("🗣 Azure Speech로 자막 변환 중..."):
+                transcript = transcribe_audio_from_file(audio_path)
+
+            with st.spinner("✍️ GPT 영상 요약 중..."):
+                cleaned_text = safe_text(transcript)
+                video_summary = summarize_text(cleaned_text)
+
+            st.markdown("#### 🎯 요약 결과")
+            st.text_area("GPT 영상 요약", video_summary, height=200)
+
+            with st.spinner("📄 PDF로 저장 중..."):
+                pdf_path = save_to_pdf(video_summary, filename="free_video_summary.pdf")
+
+            with open(pdf_path, "rb") as f:
+                st.download_button("📥 요약 결과 PDF 다운로드", f, file_name=os.path.basename(pdf_path))
+
+            st.success("✅ 요약 분석 완료!")
+
+        except Exception as e:
+            st.error(f"❌ 분석 중 오류 발생: {e}")
+else:
+    st.info("유튜브 영상 주소를 입력해주세요.")

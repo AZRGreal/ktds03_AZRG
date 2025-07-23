@@ -8,10 +8,11 @@ folium
 streamlit-folium
 openpyxl
 pytube
-openai
 azure-cognitiveservices-speech
 moviepy
 fpdf
-pytube
-moviepy
+beautifulsoup4
+lxml
 yt-dlp
+numpy
+isodate

@@ -66,3 +66,36 @@ def summarize_reviews(reviews):
     except Exception as e:
         print(f"❌ GPT 요약 중 오류: {e}")
         return f"❌ GPT 요약 중 오류 발생: {e}"
+
+def summarize_text(text: str) -> str:
+    if not text:
+        return "요약할 텍스트가 없습니다."
+
+    prompt = f"""다음은 유튜브 영상 자막 전체 내용입니다. 전체 내용을 3~5문장으로 핵심 요약해 주세요. 민감하거나 불쾌할 수 있는 내용은 일반적인 표현으로 바꾸어 요약해주세요.\n\n{text}"""
+
+    try:
+        client = AzureOpenAI(
+            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+            api_version="2024-04-01-preview"
+        )
+        response = client.chat.completions.create(
+            model=os.getenv("AZURE_OPENAI_DEPLOYMENT"),
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.5
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"❌ 요약 실패: {str(e)}"
+
+def safe_text(text: str) -> str:
+    """
+    민감 단어(폭력, 자살 등)를 GPT에 전달되기 전에 대체해주는 전처리 함수
+    """
+    banned_words = [
+        "폭행", "살인", "총", "피", "칼", "자살", "죽어", "죽이", "죽임", "총격", "폭탄",
+        "테러", "살해", "유혈", "유괴", "범죄", "구타", "폭력"
+    ]
+    for word in banned_words:
+        text = text.replace(word, "[민감 단어]")
+    return text

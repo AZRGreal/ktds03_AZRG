@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
-FFMPEG_PATH = os.getenv("VIDEO_FFMPEG_PATH", "C:/ffmpeg/bin/ffmpeg.exe")
+FFMPEG_PATH = os.path.join(os.getcwd(), "ffmpeg", "ffmpeg.exe")
 
 # 🔍 유튜브 영상 검색 (조회수 기준 정렬, 쇼츠 제외)
 def search_youtube_videos(query, max_results=3):
