@@ -1,0 +1,16 @@
+streamlit
+pandas
+requests
+python-dotenv
+openai>=1.0.0
+azure-storage-blob
+folium
+streamlit-folium
+openpyxl
+pytube
+openai
+azure-cognitiveservices-speech
+moviepy
+fpdf
+pytube
+moviepy

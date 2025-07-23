@@ -77,12 +77,18 @@ if st.session_state.search_results is not None:
 
     st.success(f"📍 검색 위치: 위도 {lat}, 경도 {lng}")
     st.dataframe(df[["name", "type", "rating", "user_ratings_total"]])
+   
+    # 지도 출력
+    with st.container():
+        st.markdown("<h6 style='margin: 5px 0;'>🗺️ 지도에서 위치 보기</h6>", unsafe_allow_html=True)
+        map_obj = render_map(df, lat, lng)
+        st_folium(map_obj, width=700, height=400, returned_objects=[])
 
-    st.markdown("### 🗺️ 지도에서 위치 보기")
-    map_obj = render_map(df, lat, lng)
-    st_folium(map_obj, width=700, height=400, returned_objects=[])
-    # 여백 최소화
-    st.markdown("<h6 style='margin: 10px 0 5px;'>📜 대표 리뷰 및 요약</h6>", unsafe_allow_html=True)
+    # 여백 최소화 및 리뷰 타이틀
+    with st.container():
+        st.markdown("<div style='margin-top: -30px;'></div>", unsafe_allow_html=True)  # 여백 강제 축소
+        st.markdown("<h6 style='margin: 5px 0;'>📜 대표 리뷰 및 요약</h6>", unsafe_allow_html=True)
+
     for idx, row in df.head(3).iterrows():
         st.markdown(f"**{row['name']}** ({row['type']})")
         reviews = get_place_reviews(row["place_id"], google_key)
