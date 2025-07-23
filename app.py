@@ -84,11 +84,10 @@ if st.session_state.search_results is not None:
     # 지도 표시
     map_obj = render_map(df, lat, lng)
     st_folium(map_obj, width=700, height=400, returned_objects=[])
-
     # 지도 바로 아래에 리뷰 타이틀 붙이기
     st.markdown(
         """
-        <div style='margin:0;padding:0;line-height:1;margin-top:-12px;'>
+        <div style='margin:0;padding:0;line-height:1;margin-top:-30px;'>
             <h6 style='margin:0;padding:0;line-height:1;margin-bottom:0px;margin-top:0px;'>📜 대표 리뷰 및 요약</h6>
         </div>
         """, unsafe_allow_html=True
