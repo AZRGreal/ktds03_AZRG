@@ -1,3 +1,4 @@
+# openai_utils.py
 import os
 from openai import AzureOpenAI
 from dotenv import load_dotenv
@@ -9,6 +10,12 @@ AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview")
 DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT")
 
+client = AzureOpenAI(
+    api_key=AZURE_OPENAI_API_KEY,
+    azure_endpoint=AZURE_OPENAI_ENDPOINT,
+    api_version=AZURE_OPENAI_API_VERSION
+)
+
 # 감정 기반 리뷰 요약 함수 (장점/단점 최대 10개)
 def summarize_reviews(reviews):
     if not reviews:
@@ -17,7 +24,6 @@ def summarize_reviews(reviews):
     try:
         text = "\n".join(reviews)
 
-        # 텍스트 길이 제한
         if len(text) > 4000:
             text = text[:4000] + "\n...(이후 생략)"
 
@@ -42,12 +48,6 @@ def summarize_reviews(reviews):
 
 지금 분석을 시작하세요.
 """
-
-        client = AzureOpenAI(
-            api_key=AZURE_OPENAI_API_KEY,
-            azure_endpoint=AZURE_OPENAI_ENDPOINT,
-            api_version=AZURE_OPENAI_API_VERSION,
-        )
 
         response = client.chat.completions.create(
             model=DEPLOYMENT_NAME,
@@ -74,13 +74,8 @@ def summarize_text(text: str) -> str:
     prompt = f"""다음은 유튜브 영상 자막 전체 내용입니다. 전체 내용을 3~5문장으로 핵심 요약해 주세요. 민감하거나 불쾌할 수 있는 내용은 일반적인 표현으로 바꾸어 요약해주세요.\n\n{text}"""
 
     try:
-        client = AzureOpenAI(
-            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            api_version="2024-04-01-preview"
-        )
         response = client.chat.completions.create(
-            model=os.getenv("AZURE_OPENAI_DEPLOYMENT"),
+            model=DEPLOYMENT_NAME,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.5
         )
@@ -88,10 +83,39 @@ def summarize_text(text: str) -> str:
     except Exception as e:
         return f"❌ 요약 실패: {str(e)}"
 
+def summarize_pros_cons(text):
+    prompt = f"""
+아래는 YouTube 영상의 텍스트 내용입니다. 이 내용을 기반으로 음식점 또는 카페에 대한 장점과 단점을 각각 최대 5개씩 정리해 주세요.
+
+### 입력 텍스트:
+{text[:4000]}
+
+### 출력 형식:
+✅ 장점:
+- 
+- 
+- 
+
+❌ 단점:
+- 
+- 
+- 
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model=DEPLOYMENT_NAME,
+            messages=[
+                {"role": "system", "content": "당신은 리뷰 분석 전문가입니다."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.5,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"GPT 오류: {e}"
+
 def safe_text(text: str) -> str:
-    """
-    민감 단어(폭력, 자살 등)를 GPT에 전달되기 전에 대체해주는 전처리 함수
-    """
     banned_words = [
         "폭행", "살인", "총", "피", "칼", "자살", "죽어", "죽이", "죽임", "총격", "폭탄",
         "테러", "살해", "유혈", "유괴", "범죄", "구타", "폭력"

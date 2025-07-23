@@ -3,8 +3,6 @@ import requests
 import pandas as pd
 import re
 from dotenv import load_dotenv
-import yt_dlp
-import os
 
 load_dotenv()
 
@@ -77,29 +75,3 @@ def get_place_reviews(place_id, api_key, max_reviews=5):
     response = requests.get(url, params=params).json()
     reviews = response.get("result", {}).get("reviews", [])
     return [r["text"] for r in reviews][:max_reviews]
-
-def download_youtube_audio(url, output_dir="downloads"):
-    try:
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-            'quiet': False,  # 디버깅 시에는 False로!
-            'cookiefile': 'cookies.txt',  # ✅ 여기가 핵심
-        }
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            filename = ydl.prepare_filename(info).replace(".webm", ".mp3").replace(".m4a", ".mp3")
-            return filename
-
-    except Exception as e:
-        print(f"[ERROR] 유튜브 오디오 다운로드 실패: {e}")
-        return None

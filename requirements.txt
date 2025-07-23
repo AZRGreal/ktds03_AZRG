@@ -16,3 +16,4 @@ lxml
 yt-dlp
 numpy
 isodate
+youtube-transcript-api
