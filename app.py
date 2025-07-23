@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import os
 import warnings
@@ -74,7 +73,7 @@ if st.session_state.search_results is not None:
     st.success(f"📍 검색 위치: 위도 {lat}, 경도 {lng}")
     st.dataframe(df[["name", "type", "rating", "user_ratings_total"]])
 
-    # 💥 지도 타이틀, 지도, 리뷰 타이틀까지 공백 최소화!
+    # 지도 타이틀
     st.markdown(
         """
         <div style='margin:0;padding:0;line-height:1;'>
@@ -82,13 +81,15 @@ if st.session_state.search_results is not None:
         </div>
         """, unsafe_allow_html=True
     )
+    # 지도 표시
     map_obj = render_map(df, lat, lng)
     st_folium(map_obj, width=700, height=400, returned_objects=[])
 
+    # 지도 바로 아래에 리뷰 타이틀 붙이기
     st.markdown(
         """
-        <div style='margin:0;padding:0;line-height:1;'>
-            <h6 style='margin:0;padding:0;line-height:1;'>📜 대표 리뷰 및 요약</h6>
+        <div style='margin:0;padding:0;line-height:1;margin-top:-12px;'>
+            <h6 style='margin:0;padding:0;line-height:1;margin-bottom:0px;margin-top:0px;'>📜 대표 리뷰 및 요약</h6>
         </div>
         """, unsafe_allow_html=True
     )
@@ -107,7 +108,8 @@ if st.session_state.search_results is not None:
         else:
             st.markdown("리뷰 없음 😞")
 
-    st.divider()
+    # 상호명으로 유튜브 검색
+    st.markdown("<hr style='margin-top:8px;margin-bottom:4px;'>", unsafe_allow_html=True)
     st.markdown("### 🔍 상호명으로 유튜브 검색하기")
     name_options = df["name"].tolist()
     selected_name = st.selectbox("검색할 상호명을 선택하세요", name_options, key="youtube_search")
@@ -120,7 +122,7 @@ if st.session_state.search_results is not None:
         """, height=0)
 
 # 새 기능: YouTube 영상 URL 분석기 (댓글 500개까지)
-st.divider()
+st.markdown("<hr style='margin-top:16px;margin-bottom:4px;'>", unsafe_allow_html=True)
 st.markdown("### 🔍 YouTube 영상 URL 기반 분석기")
 st.markdown("영상의 제목, 설명, 자막, 댓글(최대 500개)을 기반으로 GPT가 장단점을 요약해줍니다.")
 
