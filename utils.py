@@ -92,6 +92,7 @@ def download_youtube_audio(url, output_dir="downloads"):
                 'preferredquality': '192',
             }],
             'quiet': True,
+            'cookiefile': 'cookies.txt'  # ✅ 크롬 인증 쿠키 파일
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
