@@ -15,11 +15,11 @@ Azure Blob에 파일 업로드 자동화
 
 🌐 3. 사용 API (Used APIs)
 카테고리	API/서비스명	설명
-지도 검색	Google Maps Geocoding API	지하철역명 → 위도/경도 변환
-장소 검색	Google Places API	음식점/카페 장소 목록 가져오기
-리뷰 정보	Google Place Details API	각 장소의 리뷰 가져오기
-영상 다운로드	pytube	유튜브 영상 오디오 추출
-음성 → 자막	Azure Speech to Text API	유튜브 오디오 → 텍스트 자막 변환
+지도 검색	Google Maps Geocoding API	지하철역명 → 위도/경도 변환,
+장소 검색	Google Places API	음식점/카페 장소 목록 가져오기,
+리뷰 정보	Google Place Details API	각 장소의 리뷰 가져오기,
+영상 다운로드	pytube	유튜브 영상 오디오 추출,
+음성 → 자막	Azure Speech to Text API	유튜브 오디오 → 텍스트 자막 변환,
 텍스트 요약	Azure OpenAI GPT	리뷰 또는 자막 내용 요약
 
 ☁️ 4. AZURE 활용 도구
