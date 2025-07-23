@@ -74,13 +74,24 @@ if st.session_state.search_results is not None:
     st.success(f"📍 검색 위치: 위도 {lat}, 경도 {lng}")
     st.dataframe(df[["name", "type", "rating", "user_ratings_total"]])
 
-    # 지도 아래에 바로 리뷰 타이틀 붙이기 (공백 최소화)
-    st.markdown("<h6 style='margin:0;'>🗺️ 지도에서 위치 보기</h6>", unsafe_allow_html=True)
+    # 💥 지도 타이틀, 지도, 리뷰 타이틀까지 공백 최소화!
+    st.markdown(
+        """
+        <div style='margin:0;padding:0;line-height:1;'>
+            <h6 style='margin:0;padding:0;line-height:1;'>🗺️ 지도에서 위치 보기</h6>
+        </div>
+        """, unsafe_allow_html=True
+    )
     map_obj = render_map(df, lat, lng)
     st_folium(map_obj, width=700, height=400, returned_objects=[])
 
-    # 여백 없이 바로 리뷰 타이틀!
-    st.markdown("<h6 style='margin:0;'>📜 대표 리뷰 및 요약</h6>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div style='margin:0;padding:0;line-height:1;'>
+            <h6 style='margin:0;padding:0;line-height:1;'>📜 대표 리뷰 및 요약</h6>
+        </div>
+        """, unsafe_allow_html=True
+    )
 
     for idx, row in df.head(3).iterrows():
         st.markdown(f"**{row['name']}** ({row['type']})")
@@ -118,10 +129,8 @@ video_url = st.text_input("🎬 분석할 YouTube 영상 URL을 입력하세요"
 if video_url:
     if st.button("🧠 GPT 요약 시작", key="btn_summarize_url"):
         with st.spinner("📥 영상 정보 수집 중..."):
-            # get_video_data에서 댓글 개수 조정!
             title, desc, transcript, comments = get_video_data(video_url, max_comments=500)
 
-        # 데이터 수집량 확인 (디버깅)
         st.write(f"제목 길이: {len(title)}")
         st.write(f"설명 길이: {len(desc)}")
         st.write(f"자막 길이: {len(transcript)}")
@@ -134,7 +143,6 @@ if video_url:
             st.markdown(f"**📌 제목:** {title}")
             st.markdown(f"**📝 설명:** {desc}")
 
-            # 댓글 텍스트 500개까지 합치기
             comments_text = "\n".join(comments[:500])
             combined = "\n".join([title, desc, transcript, comments_text])
             cleaned = safe_text(combined)
@@ -143,4 +151,4 @@ if video_url:
                 summary = summarize_pros_cons(cleaned)
 
             st.markdown("### 🎯 분석 결과")
-            st.text_area("GPT 요약", summary, height=400)
+            st.text_area("GPT 요약", summary, height=800)
