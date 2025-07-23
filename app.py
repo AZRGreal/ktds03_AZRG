@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-import webbrowser
+# import webbrowser
 import warnings
 warnings.filterwarnings("ignore", message="cmap value too big/small:*")
 
@@ -19,7 +19,6 @@ from save_summary_to_blob import save_summary_to_blob
 from video_utils import search_youtube_videos, download_youtube_audio
 from speech_utils import transcribe_audio_from_file
 from pdf_utils import save_to_pdf
-from openai_utils import summarize_reviews, summarize_text, safe_text
 
 # 환경 변수
 google_key = os.getenv("GOOGLE_MAPS_API_KEY")
@@ -134,6 +133,11 @@ if video_url:
         try:
             with st.spinner("📥 YouTube 오디오 다운로드 중..."):
                 audio_path = download_youtube_audio(video_url)
+                      
+                if audio_path is None:
+                    st.error("❌ 오디오 파일이 생성되지 않았습니다.")
+                    st.stop()
+                    
                 upload_to_blob(audio_path, os.path.basename(audio_path))
 
             with st.spinner("🗣 Azure Speech로 자막 변환 중..."):
@@ -187,6 +191,11 @@ if free_video_url:
         try:
             with st.spinner("📥 YouTube 오디오 다운로드 중..."):
                 audio_path = download_youtube_audio(free_video_url)
+                
+                if audio_path is None:
+                    st.error("❌ 오디오 파일이 생성되지 않았습니다.")
+                    st.stop()
+                    
                 upload_to_blob(audio_path, os.path.basename(audio_path))
 
             with st.spinner("🗣 Azure Speech로 자막 변환 중..."):
@@ -211,3 +220,4 @@ if free_video_url:
             st.error(f"❌ 분석 중 오류 발생: {e}")
 else:
     st.info("유튜브 영상 주소를 입력해주세요.")
+
