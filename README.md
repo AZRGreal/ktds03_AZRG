@@ -105,6 +105,28 @@
 ---
 
 
+| 파일/폴더명                | 설명                                      |
+|---------------------------|-----------------------------------------|
+| app.py                    | 📄 Streamlit 메인 앱 (웹UI, 전체 로직)         |
+| utils.py                  | 🛠️  공통 유틸 함수 (장소 검색 등)              |
+| youtube_data.py           | 📺 유튜브 영상, 댓글, 자막 등 추출 함수         |
+| openai_utils.py           | 🤖 GPT 기반 요약, 텍스트 전처리 함수           |
+| map_utils.py              | 🗺️  지도(folium) 시각화 함수                  |
+| azure_blob.py             | ☁️  Azure Blob Storage 파일 업로드 함수        |
+| save_summary_to_blob.py   | 💾 GPT 요약 결과를 Blob에 저장                |
+| pdf_utils.py              | 📑 PDF 저장 관련 함수                        |
+| requirements.txt          | 📦 프로젝트 의존 패키지 목록                   |
+| .env                      | 🔒 환경 변수/API 키 (노출 금지)                |
+| .streamlit/config.toml    | ⚙️  Streamlit 서버/포트 설정                   |
+| ffmpeg/ffmpeg.exe         | 🎵 오디오/영상 처리용 바이너리                 |
+| NanumGothic.ttf           | 🅰️  한글 PDF 저장용 폰트                      |
+| [검색역]_search_results.csv| 📊 검색 결과 파일(자동 생성)                   |
+| [매장명]_summary.txt/pdf   | 📝 GPT 요약/분석 결과(자동 생성)               |
+
+---
+
+> 각 파일/폴더의 실제 목적과 용도에 맞춰 쉽게 유지보수 및 확장 가능
+>  > 필요에 따라 이미지/음원/기타 저장 폴더 추가도 가능
 
 ⚡ 시스템 요약 흐름
 
